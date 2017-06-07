@@ -532,12 +532,13 @@ class LVAPPConnection(object):
         hwaddr = EtherAddress(status.hwaddr)
         channel = status.channel
         band = status.band
+
         lvap.supported.add(ResourceBlock(lvap, hwaddr, channel, band))
 
         match = wtp.supports & lvap.supported
 
         if not match:
-            LOG.error("Incoming block %s is invalid", block)
+            LOG.error("Incoming block %s is invalid", lvap.supported)
             return
 
         block = match.pop()
@@ -922,9 +923,12 @@ class LVAPPConnection(object):
         if lvap.encap:
             encap = lvap.encap
 
+        lvap_block = next(iter(lvap.supported))
+        lvap_band = lvap_block.band
+
         add_lvap = Container(version=PT_VERSION,
                              type=PT_ADD_LVAP,
-                             length=48,
+                             length=49,
                              seq=self.wtp.seq,
                              group=lvap.group,
                              flags=flags,
@@ -932,6 +936,7 @@ class LVAPPConnection(object):
                              hwaddr=block.hwaddr.to_raw(),
                              channel=block.channel,
                              band=block.band,
+                             lvap_band=lvap_band,
                              sta=lvap.addr.to_raw(),
                              encap=encap.to_raw(),
                              net_bssid=lvap.net_bssid.to_raw(),
